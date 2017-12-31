@@ -5,7 +5,7 @@ This is a simple uploader extension for the Much Assembly Required game.
 https://muchassemblyrequired.com/
 
 It basically allows you to avoid using the web interface to upload;
-![Much Assembly Required](https://i.imgur.com/30GJEQD.png | width=400)
+![Much Assembly Required](https://i.imgur.com/30GJEQD.png)
 
 ## Features
 
