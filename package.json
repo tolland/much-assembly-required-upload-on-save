@@ -1,0 +1,131 @@
+{
+    "name": "much-assembly-required-upload-on-save",
+    "displayName": "Much Assembly Required (Upload on Save)",
+    "description": "Handle uploading to the server on save mar file",
+    "version": "0.0.1",
+    "publisher": "lime-pepper",
+    "repository": {
+        "url": "https://github.com/PJB3005/much-assembly-required-vscode.git",
+        "type": "git"
+    },
+    "license": "MIT",
+    "engines": {
+        "vscode": "^1.19.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:marserver.sayHello",
+        "onCommand:marserver.sayHello1",
+        "onCommand:marserver.sayHello2",
+        "onCommand:marserver.sayHello3",
+        "onCommand:marserver.sayHello4"
+    ],
+    "main": "./extension",
+    "contributes": {
+        "commands": [{
+            "command": "marserver.sayHello",
+            "title": "MAR Upload file"
+        }, {
+            "command": "marserver.sayHello1",
+            "title": "MAR Upload file"
+        }, {
+            "command": "marserver.sayHello2",
+            "title": "MAR Upload file"
+        }, {
+            "command": "marserver.sayHello3",
+            "title": "MAR Upload file"
+        }, {
+            "command": "marserver.sayHello4",
+            "title": "MAR Upload file"
+        }],
+        "configuration": {
+            "type": "object",
+            "title": "Mar Server configuration",
+            "properties": {
+                "marserver.url": {
+                    "type": "string",
+                    "default": "https://muchassemblyrequired.com/",
+                    "description": "hostname to connect"
+                },
+                "marserver.username": {
+                    "type": "string",
+                    "default": "a.username",
+                    "description": "muchassemblyrequired.com username"
+                },
+                "marserver.password": {
+                    "type": "string",
+                    "default": "a.password",
+                    "description": "muchassemblyrequired.com password"
+                },
+                "marserver.servers": {
+                    "type": "array",
+                    "description": "target multiple servers, add array of objects with properties, username, password, hostname, path, proto etc",
+                    "items": {
+                        "type": "object",
+                        "title": "inner objects",
+                        "properties": {
+                            "url": {
+                                "type": "string",
+                                "default": "https://muchassemblyrequired.com/",
+                                "description": "hostname to connect"
+                            },
+                            "username": {
+                                "type": "string",
+                                "default": "XXX",
+                                "description": "password to connect"
+                            },
+                            "password": {
+                                "type": "string",
+                                "default": "XXX",
+                                "description": "much assembly required hostname"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+
+        "keybindings": [{
+            "command": "marserver.sayHello",
+            "key": "ctrl+alt+u",
+            "mac": "cmd+alt+u",
+            "when": "editorTextFocus"
+        }, {
+            "command": "marserver.sayHello1",
+            "key": "ctrl+shift+alt+1",
+            "mac": "cmd+shift+alt+1",
+            "when": "editorTextFocus"
+        }, {
+            "command": "marserver.sayHello2",
+            "key": "ctrl+shift+alt+2",
+            "mac": "cmd+shift+alt+2",
+            "when": "editorTextFocus"
+        }, {
+            "command": "marserver.sayHello3",
+            "key": "ctrl+shift+alt+3",
+            "mac": "cmd+shift+alt+3",
+            "when": "editorTextFocus"
+        }, {
+            "command": "marserver.sayHello4",
+            "key": "ctrl+shift+alt+4",
+            "mac": "cmd+shift+alt+4",
+            "when": "editorTextFocus"
+        }]
+    },
+    "scripts": {
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.6",
+        "eslint": "^4.6.1",
+        "@types/node": "^7.0.43",
+        "@types/mocha": "^2.2.42"
+    },
+    "dependencies": {
+        "ws": "^3.3.3"
+    }
+}
