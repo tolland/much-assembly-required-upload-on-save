@@ -43,18 +43,21 @@ If you have a private server, or similar you can add blocks of servers
     //create a bunch of alternatives
     "marserver.servers": [
         {
-            "username": "tolland",
-            "password": "XaeNge3ohsh4"
+          // default user for muchassemblyrequired
+            "username": "some.user",
+            "password": "XXXYyyZZZ"
         },
         {
-            "username": "a.n.other.user",
-            "password": "secret.password",
-            "url": "http://95.85.6.131/mar"
-        },
-        {
+          // other servers. localhost maybe??
             "username": "myserverXYZ",
             "password": "my.pass",
             "url": "http://localhost/Much-Assembly-Required-Frontend"
+        },
+        {
+          // A dev server
+            "username": "a.n.other.user",
+            "password": "secret.password",
+            "url": "http://95.85.6.131/mar"
         }
     ],
 ```
