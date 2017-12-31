@@ -3,9 +3,9 @@
     "displayName": "Much Assembly Required (Upload on Save)",
     "description": "Handle uploading to the server on save mar file",
     "version": "0.0.1",
-    "publisher": "lime-pepper",
+    "publisher": "tomhodder",
     "repository": {
-        "url": "https://github.com/PJB3005/much-assembly-required-vscode.git",
+        "url": "https://github.com/tolland/much-assembly-required-upload-on-save",
         "type": "git"
     },
     "license": "MIT",
@@ -29,16 +29,16 @@
             "title": "MAR Upload file"
         }, {
             "command": "marserver.sayHello1",
-            "title": "MAR Upload file"
+            "title": "MAR Upload file 1"
         }, {
             "command": "marserver.sayHello2",
-            "title": "MAR Upload file"
+            "title": "MAR Upload file 2"
         }, {
             "command": "marserver.sayHello3",
-            "title": "MAR Upload file"
+            "title": "MAR Upload file 3"
         }, {
             "command": "marserver.sayHello4",
-            "title": "MAR Upload file"
+            "title": "MAR Upload file 4"
         }],
         "configuration": {
             "type": "object",
