@@ -5,7 +5,23 @@ This is a simple uploader extension for the Much Assembly Required game.
 https://muchassemblyrequired.com/
 
 It basically allows you to avoid using the web interface to upload;
-![Much Assembly Required](https://i.imgur.com/30GJEQD.png)
+
+![Much Assembly Required](https://i.imgur.com/Cu8wXhc.png?1)
+
+Instead press `Ctrl-Alt-U`
+
+
+![Much Assembly Required](https://i.imgur.com/bx4wTnf.png)
+
+
+or 
+
+* `Ctrl-Shift-Alt-1` 
+* `Ctrl-Shift-Alt-2` 
+* `Ctrl-Shift-Alt-3`
+* `Ctrl-Shift-Alt-4`
+
+to upload to multiple servers.
 
 ## Features
 
@@ -64,10 +80,10 @@ If you have a private server, or similar you can add blocks of servers
 
 You can then use the following keybings to upload the active file
 
- * `Ctrl-Shift-Alt-1` - uploads the first server
- * `Ctrl-Shift-Alt-2` - the next one
- * `Ctrl-Shift-Alt-3`
- * `Ctrl-Shift-Alt-4`
+* `Ctrl-Shift-Alt-1` - uploads the first server
+* `Ctrl-Shift-Alt-2` - the next one
+* `Ctrl-Shift-Alt-3`
+* `Ctrl-Shift-Alt-4`
  
  Using a keybinding probably throws an error if server doesn't exist in config
 
