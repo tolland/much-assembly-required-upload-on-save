@@ -2,7 +2,7 @@
     "name": "much-assembly-required-upload-on-save",
     "displayName": "Much Assembly Required (Upload on Save)",
     "description": "Handle uploading to the server on save mar file",
-    "version": "0.0.1",
+    "version": "0.0.3",
     "publisher": "tomhodder",
     "repository": {
         "url": "https://github.com/tolland/much-assembly-required-upload-on-save",
@@ -10,7 +10,7 @@
     },
     "license": "MIT",
     "engines": {
-        "vscode": "^1.19.0"
+        "vscode": "^1.18.1"
     },
     "categories": [
         "Other"
