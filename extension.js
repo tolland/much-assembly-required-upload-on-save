@@ -18,27 +18,40 @@ function activate(context) {
     let disposable = vscode.commands.registerCommand('marserver.sayHello', function () {
         // The code you place here will be executed every time your command is executed
 
-        handle_onsave.uploadfile(
-            vscode.workspace.getConfiguration('marserver'),
-            vscode.window.activeTextEditor.document.uri.fsPath
-        );
+        const config = vscode.workspace.getConfiguration('marserver');
+        if (config) {
 
-        // Display a message box to the user
-        vscode.window.showInformationMessage('File Uploaded');
+            handle_onsave.uploadfile(
+                config,
+                vscode.window.activeTextEditor.document.uri.fsPath,
+                vscode
+            );
+
+        } else {
+            vscode.window.showWarningMessage('no config found for keybinding Ctrl+Alt+U');
+        }
     });
 
     context.subscriptions.push(disposable);
 
+    // create 4 keybindings for Ctrl-Shift-Alt-[1-4]
     for (let index = 0; index < 4; index++) {
         let disposable = vscode.commands.registerCommand('marserver.sayHello' +
             (index + 1),
             function () {
+                let config = vscode.workspace.getConfiguration('marserver')
+                    .get("servers")[index];
 
-                handle_onsave.uploadfile(
-                    vscode.workspace.getConfiguration('marserver').get("servers")[index],
-                    vscode.window.activeTextEditor.document.uri.fsPath
-                );
-                vscode.window.showInformationMessage('File Uploaded');
+                if (config) {
+                    handle_onsave.uploadfile(
+                        config,
+                        vscode.window.activeTextEditor.document.uri.fsPath,
+                        vscode
+                    );
+                } else {
+                    vscode.window.showWarningMessage('no config found for keybinding Ctrl+Shift+Alt+' +
+                        (index + 1));
+                }
             });
         context.subscriptions.push(disposable);
     }

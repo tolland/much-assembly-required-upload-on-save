@@ -28,7 +28,7 @@ module.exports = function () {
  * @param {object} config - hash of url, username, password
  * @param {string} filepath - full path to targetfile
  */
-var uploadfile = function (config, filepath) {
+var uploadfile = function (config, filepath, vscode) {
 
   var eventEmitter = new events.EventEmitter();
 
@@ -72,23 +72,6 @@ var uploadfile = function (config, filepath) {
     function (response) {
       response.setEncoding('utf8');
 
-      var setcookie = response.headers["set-cookie"];
-      if (setcookie) {
-        setcookie.forEach(
-          function (cookiestr) {
-            /**
-             * TODO handle login failure...
-      login=Username+or+password+incorrect
-      marSession=97469464777779797d724410a6dfda; path=/
-          */
-            console.log("COOKIE:" + cookiestr);
-            if (cookiestr.startsWith('marSession')) {
-              cookies['marSession'] = cookiestr.split(';')[0].split('=')[1];
-            }
-          }
-        );
-      }
-
       var data = "";
       response.on(
         "data",
@@ -100,9 +83,30 @@ var uploadfile = function (config, filepath) {
       response.on(
         "end",
         () => {
-          console.log("cookie is " + cookies['marSession'])
-          console.log("STATUS:" + response.statusCode);
-          eventEmitter.emit('got-cookie');
+
+          var setcookie = response.headers["set-cookie"];
+          if (setcookie) {
+            setcookie.forEach(
+              function (cookiestr) {
+                /**
+                 * TODO handle login failure...
+          login=Username+or+password+incorrect
+          marSession=97469464777779797d724410a6dfda; path=/
+              */
+                console.log("COOKIE:" + cookiestr);
+                if (cookiestr.startsWith('login=Username+or+password+incorrect')) {
+                  eventEmitter.emit('login-error');
+                } else if (cookiestr.startsWith('marSession')) {
+                  cookies['marSession'] = cookiestr.split(';')[0].split('=')[1];
+                  console.log("cookie is " + cookies['marSession'])
+                  console.log("STATUS:" + response.statusCode);
+                  eventEmitter.emit('got-cookie');
+                }
+              }
+            );
+          } else {
+            eventEmitter.emit('no-cookie');
+          }
         }
       );
     });
@@ -111,7 +115,7 @@ var uploadfile = function (config, filepath) {
     "error",
     function (err) {
       console.error("ERROR:" + err);
-      process.exit(1);
+      eventEmitter.emit('network-error');
     }
   );
 
@@ -163,6 +167,18 @@ var uploadfile = function (config, filepath) {
           }
         );
 
+        /**
+         response looks like
+         {
+    "address": "wss://muchassemblyrequired.com:443/socket",
+    "serverName": "Official MAR server",
+    "tickLength": 1000,
+    "token": "1a54d0e570b...snip...d80841c6ff1b3c3714825",
+    "username": "XXX"
+          } 
+
+        need token and address fields...
+         */
         response.on(
           "end",
           () => {
@@ -182,6 +198,7 @@ var uploadfile = function (config, filepath) {
       "error",
       function (err) {
         console.error("ERROR:" + err);
+        eventEmitter.emit('network-error');
       }
     );
 
@@ -205,6 +222,7 @@ var uploadfile = function (config, filepath) {
       }
     });
 
+    // websocket needs the token sent to it bare...
     ws.on('open', function open() {
       ws.send(cookies['ServerInfo'].token);
     });
@@ -212,7 +230,7 @@ var uploadfile = function (config, filepath) {
     ws.on('error', function (data) {
       console.log("error");
       console.log(data);
-      process.exit(1);
+      eventEmitter.emit('network-error');
     });
 
     ws.on('message', function incoming(data) {
@@ -221,6 +239,7 @@ var uploadfile = function (config, filepath) {
 
       if (message) {
         if (message.t) {
+          // responds with {t: "auth", m: "ok"}
           switch (message.t) {
             case 'auth':
               if (message.m == 'ok') {
@@ -283,6 +302,24 @@ var uploadfile = function (config, filepath) {
     var ws = cookies['websocket'];
     ws.close(NORMAL_CLOSE, 'Upload Complete');
     console.log("Closing and going away ...");
+
+
+    vscode.window.setStatusBarMessage('File Uploaded - ' + vscode.window.activeTextEditor.document.uri.fsPath + ' to ' + config.url, 10000);
+  });
+
+  eventEmitter.on('no-cookie', () => {
+    console.log("No cookie ...");
+    vscode.window.showErrorMessage('No cookie was returned - url: ' + config.url);
+  });
+
+  eventEmitter.on('login-error', () => {
+    console.log("Login error ...");
+    vscode.window.showErrorMessage('Login error from server - url: ' + config.url);
+  });
+
+  eventEmitter.on('network-error', () => {
+    console.log("network error ...");
+    vscode.window.showErrorMessage('there was a network error - url: ' + config.url);
   });
 
 }
