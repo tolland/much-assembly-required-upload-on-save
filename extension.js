@@ -32,11 +32,11 @@ function activate(context) {
                         matchBase: true
                     })) {
                     matched = true;
-                    console.log("matched " + filePath)
+                    //console.log("matched " + filePath)
                 }
 
             });
-            console.log("processing " + command)
+            //console.log("processing " + command)
             if (matched) {
                 vscode.commands.executeCommand(command);
             }
@@ -66,7 +66,7 @@ function activate(context) {
 
     context.subscriptions.push(disposable);
 
-    // create 4 keybindings for Ctrl-Shift-Alt-[1-4]
+    // create 4 commands corredponding to keybindings for Ctrl-Shift-Alt-[1-4]
     for (let index = 0; index < 4; index++) {
         let disposable = vscode.commands.registerCommand('marserver.uploadToServer' +
             (index + 1),
@@ -75,7 +75,6 @@ function activate(context) {
                     .get("servers")[index];
 
                 if (config) {
-
 
                     // TODO can't seem to require the vscode module in 
                     // the handle-onsave module, so passing it in here...

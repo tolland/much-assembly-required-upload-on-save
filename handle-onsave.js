@@ -2,6 +2,21 @@
 //
 //
 //
+/**
+ * Authentication to be able to send the assembly source code to
+ * the websocket seems to be in 4 (3 needed?) stages
+ * 1) authenticate with user/pass to url auth.re.php
+ * 2) Use the cookie from 1) to request a token from getServerInfo.php
+ * 3) Open connection to websocket using cookie from 1)
+ * 4) send the token obtained from 2) to the socket as a message
+ * 
+ * 5) Then parse the reply on the websocket relating to the code
+ * to check it was recieved.
+ * 
+ * NOTE: these requests can't be interleaved, otherwise it invalidates
+ * the token stored in the mysql database which is sent to the websocket
+ * 
+ */
 
 
 var events = require('events');
@@ -47,12 +62,14 @@ var uploadfile = function (config, filepath, vscode) {
 
   // bleh
   var parsedurl = url.parse(urlstring);
+  var http;
 
+  //assume that the protocol is the same between the auth and the token
   if (parsedurl.protocol == 'http:') {
-    var http = require("http");
+    http = require("http");
     parsedurl.port = parsedurl.port || 80;
   } else {
-    var http = require("https");
+    http = require("https");
     parsedurl.port = parsedurl.port || 443;
   }
 
@@ -72,6 +89,19 @@ var uploadfile = function (config, filepath, vscode) {
     function (response) {
       response.setEncoding('utf8');
 
+      switch (response.statusCode) {
+        case 200:
+          // ok-continue
+          break;
+        case 500:
+          eventEmitter.emit('error', 'status-error from auth: (PHP or MySQL??)' + response.statusCode);
+
+          //don't process if we recieved a 500 error
+          return;
+
+      }
+
+
       var data = "";
       response.on(
         "data",
@@ -85,27 +115,35 @@ var uploadfile = function (config, filepath, vscode) {
         () => {
 
           var setcookie = response.headers["set-cookie"];
+
           if (setcookie) {
             setcookie.forEach(
               function (cookiestr) {
-                /**
-                 * TODO handle login failure...
-          login=Username+or+password+incorrect
-          marSession=97469464777779797d724410a6dfda; path=/
-              */
-                console.log("COOKIE:" + cookiestr);
-                if (cookiestr.startsWith('login=Username+or+password+incorrect')) {
-                  eventEmitter.emit('login-error');
-                } else if (cookiestr.startsWith('marSession')) {
+
+                if (cookiestr.startsWith('marSession')) {
                   cookies['marSession'] = cookiestr.split(';')[0].split('=')[1];
-                  console.log("cookie is " + cookies['marSession'])
-                  console.log("STATUS:" + response.statusCode);
                   eventEmitter.emit('got-cookie');
+
+                } else if (cookiestr.startsWith('login=Username+or+password+incorrect')) {
+
+                  console.log("COOKIE:ERROR:" + cookiestr);
+                  eventEmitter.emit('error', 'login-error in cookie string (Check User/Pass)');
+
+                } else {
+
+                  console.log("DIDN'T RECOGNISE COOKIE:" + cookiestr);
+                  eventEmitter.emit('error', "DIDN'T RECOGNISE COOKIE: " + cookiestr);
                 }
               }
             );
+
+            // if (!cookies['marSession']) {
+            //   eventEmitter.emit('error', "DIDN'T match marcookie");
+            // }
+
           } else {
-            eventEmitter.emit('no-cookie');
+            console.log("COOKIE:ERROR:NO-COOKIE");
+            eventEmitter.emit('error', 'no-cookie returned');
           }
         }
       );
@@ -114,8 +152,7 @@ var uploadfile = function (config, filepath, vscode) {
   post_req.on(
     "error",
     function (err) {
-      console.error("ERROR:" + err);
-      eventEmitter.emit('network-error');
+      eventEmitter.emit('error', 'network-error at AUTH (check URL in Settings)', err);
     }
   );
 
@@ -131,17 +168,7 @@ var uploadfile = function (config, filepath, vscode) {
    */
   eventEmitter.on('got-cookie', () => {
 
-    // Set up the request
     var parsedurl = url.parse(token_urlstring);
-
-    // do I need to do this again??
-    if (parsedurl.protocol == 'http:') {
-      var http = require("http");
-      parsedurl.port = parsedurl.port || 80;
-    } else {
-      var http = require("https");
-      parsedurl.port = parsedurl.port || 443;
-    }
 
     var token_options = {
       hostname: parsedurl.hostname,
@@ -157,7 +184,17 @@ var uploadfile = function (config, filepath, vscode) {
       function (response) {
         response.setEncoding('utf8');
 
-        console.log("STATUS:" + response.statusCode);
+        switch (response.statusCode) {
+          case 200:
+            // ok-continue
+            break;
+          case 500:
+            eventEmitter.emit('error', 'status-error from token: ' + response.statusCode);
+
+            //don't process if we recieved a 500 error
+            return;
+
+        }
 
         var data = "";
         response.on(
@@ -182,12 +219,21 @@ var uploadfile = function (config, filepath, vscode) {
         response.on(
           "end",
           () => {
-            console.log("at end");
+            //console.log("at end");
             cookies['ServerInfo'] = JSON.parse(data);
-            console.log("token is " + cookies['ServerInfo'].token);
-            console.log("STATUS:" + response.statusCode);
-            console.log("  DATA:" + data);
-            eventEmitter.emit('got-token');
+            //console.log("token is " + cookies['ServerInfo'].token);
+            //console.log("STATUS:" + response.statusCode);
+            //console.log("  DATA:" + data);
+
+            if (cookies['ServerInfo'].token.startsWith('000000000')) {
+
+              eventEmitter.emit('error', 'token suggests not authenticated',
+                cookies['ServerInfo'].token);
+            } else {
+
+              eventEmitter.emit('got-token');
+            }
+
           }
         );
 
@@ -197,8 +243,7 @@ var uploadfile = function (config, filepath, vscode) {
     token_req.on(
       "error",
       function (err) {
-        console.error("ERROR:" + err);
-        eventEmitter.emit('network-error');
+        eventEmitter.emit('error', 'network-error in token request (??)', err);
       }
     );
 
@@ -214,7 +259,7 @@ var uploadfile = function (config, filepath, vscode) {
    * needs to be passed to the websocket to authenticate
    */
   eventEmitter.on('got-token', () => {
-    console.log("got-token- opening websocket");
+    //console.log("got-token- opening websocket");
 
     const ws = new WebSocket(cookies['ServerInfo'].address, {
       perMessageDeflate: false,
@@ -228,121 +273,134 @@ var uploadfile = function (config, filepath, vscode) {
 
     // websocket needs the token sent to it bare...
     ws.on('open', function open() {
-      console.log("Open, sending token to websocket")
+      eventEmitter.emit('debug', "WebSocket:Open:OK, sending token to websocket");
       ws.send(cookies['ServerInfo'].token);
 
-      //save the websocket in the global
+      //save the websocket in the global so we can close it later
       cookies['websocket'] = ws;
     });
 
-    ws.on('error', function (data) {
-      console.log("error in websocket");
-      console.log(data);
-      eventEmitter.emit('ws-network-error');
+    ws.on('error', function (error) {
+      eventEmitter.emit('error', 'No webSocket (Server backend is Down!)', error);
     });
 
+    var tick_counter = 0;
+    //store messages for debugging
+    var message_stack = [];
+
     ws.on('message', function incoming(data) {
-      console.log("on message in got-token");
+      eventEmitter.emit('debug', "WebSocket:onmessage", data);
 
       var message = JSON.parse(data);
 
       if (message) {
+        message_stack.push(message);
         if (message.t) {
-          // responds with {t: "auth", m: "ok"}
+
           switch (message.t) {
+            // responds with {t: "auth", m: "ok"}
             case 'auth':
               if (message.m == 'ok') {
-                eventEmitter.emit('send-code');
+                //console.log("WebSocket:AUTH:OK");
+                fs.readFile(filepath, 'utf8', function (err, data) {
+                  if (err) {
+                    eventEmitter.emit('error',
+                      "code read error (couldn't send file)", err);
+
+                  } else {
+                    cookies['websocket'].send(JSON.stringify({
+                      t: 'uploadCode',
+                      code: data
+                    }));
+                    message_stack.push('uploadCode');
+                  }
+                });
               }
               break;
-            default:
-              console.log("on message in got-token " + message.m);
+              //{"t":"codeResponse","bytes":1672}
+            case 'codeResponse':
+              if (message.bytes) {
+                //console.log("WebSocket:codeResponse:OK");
+                const NORMAL_CLOSE = 1000;
+                var ws = cookies['websocket'];
+                ws.close(NORMAL_CLOSE, 'Upload Complete');
+                //console.log("WebSocket:Closing and going away ...");
+
+                vscode.window.setStatusBarMessage('File Uploaded - ' + vscode.window.activeTextEditor.document.uri.fsPath +
+                  ' to ' + config.url, 10000);
+              }
+              break;
+            case 'tick':
+              eventEmitter.emit('debug', "tick from websocket - counting");
+              tick_counter++;
+
+              if (tick_counter > 10) {
+                eventEmitter.emit('error', "too many ticks (Don't Submit too fast)",
+                  message_stack);
+              }
 
               break;
+            default:
+              console.log("WebSocket:AUTH:URL:" + cookies['ServerInfo'].address);
+              console.log("WebSocket:AUTH:DATA:" + data);
+              console.log(message.t);
+              tick_counter++;
+
+              if (tick_counter > 10) {
+                eventEmitter.emit('error', "too many ticks (Don't Submit too fast)",
+                  message_stack);
+              }
+              break;
+          }
+        } else {
+          console.log("WebSocket:OTHER:URL:" + cookies['ServerInfo'].address);
+          console.log("WebSocket:SOME MESSAGE OTHER THAN t");
+          console.log("WebSocket:AUTH:OTHER:" + message);
+          console.log("WebSocket:AUTH:DATA:" + data);
+          tick_counter++;
+
+          if (tick_counter > 10) {
+            eventEmitter.emit('error', "too many ticks (Don't Submit too fast)",
+              message_stack);
           }
         }
       }
-      console.log(data);
-      console.log("message");
     });
   });
 
-  /**
-   *  process the response from the server
-   */
-  eventEmitter.on('send-code', () => {
 
-    var ws = cookies['websocket'];
+  eventEmitter.on('debug1', (msg, obj) => {
 
-    fs.readFile(filepath, 'utf8', function (err, data) {
-      if (err) {
-        console.log(err);
-        process.exit(1);
-      }
+    console.log("DEBUGGING: " + msg);
 
-      var msg = {};
-      msg.t = 'uploadCode';
-      msg.code = data;
-
-      ws.send(JSON.stringify(msg));
-
-      ws.on('message', function incoming(data) {
-
-        var message = JSON.parse(data);
-
-        if (message) {
-          if (message.t) {
-            switch (message.t) {
-              case 'codeResponse':
-                if (message.bytes) {
-                  eventEmitter.emit('sent-code');
-                }
-                break;
-            }
-          }
-        }
-      });
-    });
-  });
-
-  /**
-   *  process the response from the server
-   */
-  eventEmitter.on('sent-code', () => {
-    const NORMAL_CLOSE = 1000;
-    var ws = cookies['websocket'];
-    ws.close(NORMAL_CLOSE, 'Upload Complete');
-    console.log("Closing and going away ...");
-
-    vscode.window.setStatusBarMessage('<color=red>File</color> Uploaded - ' + vscode.window.activeTextEditor.document.uri.fsPath + ' to ' + config.url, 10000);
-
-  });
-
-  eventEmitter.on('no-cookie', () => {
-    console.log("No cookie ...");
-    vscode.window.showErrorMessage('No cookie was returned - url: ' + config.url);
-  });
-
-  eventEmitter.on('login-error', () => {
-    console.log("Login error ...");
-    vscode.window.showErrorMessage('Login error from server - url: ' + config.url);
-  });
-
-  eventEmitter.on('network-error', () => {
-    console.log("network error ...");
-    vscode.window.showErrorMessage('there was a network error - url: ' + config.url);
-  });
-
-  eventEmitter.on('ws-network-error', () => {
-    console.log("websocket network error ...");
-    vscode.window.showErrorMessage('there was a websocket network error - url: ' + config.url);
-
-    console.log(cookies);
-    //try and do some sort of cleanup on the websocket if it has failed
-    var ws1 = cookies['websocket'];
-    if (ws1) {
-      console.log("connection status is " + ws1.readyState);
-      ws1.close(NORMAL_CLOSE, 'Upload Complete');
+    if (obj) {
+      console.log(obj);
     }
   });
+
+
+  eventEmitter.on('error', (error, object) => {
+    console.error("error: " + error);
+    vscode.window.showErrorMessage(error + ' - url: ' + config.url);
+    if (object) {
+      vscode.window.showErrorMessage(object);
+      console.error(object);
+    }
+
+    var ws1 = cookies['websocket'];
+    if (ws1) {
+      eventEmitter.emit('debug', "connection status is " + ws1.readyState);
+      /**
+       * CONNECTING 	0 	The connection is not yet open.
+          OPEN 	1 	The connection is open and ready to communicate.
+          CLOSING 	2 	The connection is in the process of closing.
+          CLOSED 	3 	The connection is closed or couldn't be opened.
+       */
+      // its fine to call close on a closed connection
+      ws1.close();
+    }
+
+  });
+
+
 }

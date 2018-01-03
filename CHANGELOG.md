@@ -3,6 +3,9 @@ All notable changes to the "much-assembly-required--upload-on-save" extension wi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.6] 2018-01-03
+
+Add better error messages
 
 ## [0.0.5] 2018-01-03
 
