@@ -51,6 +51,21 @@ Only requires username/password for muchassemblyrequired.com in `settings.json`
 ```
 Pressing Ctrl-Alt-U will upload the current file in the editor to muchassemblyrequired.com
 
+#### Configure Upload-on-save
+
+add the following to your `settings.json` to automatically upload-on-save any file matching the glob.
+
+```json
+    "marserver.onsave": true,
+    "marserver.commands": {
+        "marserver.uploadToServer": [
+            "**/*.mar"
+        ]
+    }
+
+```
+
+
 ### Advanced config. When using multiple target servers
 
 If you have a private server, or similar you can add blocks of servers
@@ -87,20 +102,35 @@ You can then use the following keybings to upload the active file
  
  Using a keybinding probably throws an error if server doesn't exist in config
 
+ ### auto-upload on save for multiple servers
+
+If you have configured an array of marservers, you can up the active file to all of them, on saving the active document.
+
+You can have up to 4 (corresponding to keybings Ctrl-Shift-Alt-[1-4])
+
+ ```json
+,
+    "marserver.onsave": true,
+    "marserver.commands": {
+        "marserver.uploadToServer1": [
+            "**/*.mar"
+        ],
+        "marserver.uploadToServer2": [
+            "**/*.mar"
+        ],
+        "marserver.uploadToServer3": [
+            "**/*.mar"
+        ],
+        "marserver.uploadToServer4": [
+            "**/*.mar"
+        ]
+    }
+ ```
+
 ## Known Issues
 
 This is a quickly written work-around. It's unlikely to be without bugs
 make sure you have a backup of your files before uploading
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-
-### 0.1.0
-
-Really a bare bones demo.
-
 
 ### For more information
 

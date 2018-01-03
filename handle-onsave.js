@@ -214,26 +214,35 @@ var uploadfile = function (config, filepath, vscode) {
    * needs to be passed to the websocket to authenticate
    */
   eventEmitter.on('got-token', () => {
+    console.log("got-token- opening websocket");
 
     const ws = new WebSocket(cookies['ServerInfo'].address, {
       perMessageDeflate: false,
       'headers': {
         'Cookie': 'marSession=' + cookies['marSession']
-      }
+      },
+      handshakeTimeout: 5000
+    }, {
+      handshakeTimeout: 5000
     });
 
     // websocket needs the token sent to it bare...
     ws.on('open', function open() {
+      console.log("Open, sending token to websocket")
       ws.send(cookies['ServerInfo'].token);
+
+      //save the websocket in the global
+      cookies['websocket'] = ws;
     });
 
     ws.on('error', function (data) {
-      console.log("error");
+      console.log("error in websocket");
       console.log(data);
-      eventEmitter.emit('network-error');
+      eventEmitter.emit('ws-network-error');
     });
 
     ws.on('message', function incoming(data) {
+      console.log("on message in got-token");
 
       var message = JSON.parse(data);
 
@@ -243,10 +252,12 @@ var uploadfile = function (config, filepath, vscode) {
           switch (message.t) {
             case 'auth':
               if (message.m == 'ok') {
-                //save the authenticated websocket in the global
-                cookies['websocket'] = ws;
                 eventEmitter.emit('send-code');
               }
+              break;
+            default:
+              console.log("on message in got-token " + message.m);
+
               break;
           }
         }
@@ -303,8 +314,8 @@ var uploadfile = function (config, filepath, vscode) {
     ws.close(NORMAL_CLOSE, 'Upload Complete');
     console.log("Closing and going away ...");
 
+    vscode.window.setStatusBarMessage('<color=red>File</color> Uploaded - ' + vscode.window.activeTextEditor.document.uri.fsPath + ' to ' + config.url, 10000);
 
-    vscode.window.setStatusBarMessage('File Uploaded - ' + vscode.window.activeTextEditor.document.uri.fsPath + ' to ' + config.url, 10000);
   });
 
   eventEmitter.on('no-cookie', () => {
@@ -322,4 +333,16 @@ var uploadfile = function (config, filepath, vscode) {
     vscode.window.showErrorMessage('there was a network error - url: ' + config.url);
   });
 
+  eventEmitter.on('ws-network-error', () => {
+    console.log("websocket network error ...");
+    vscode.window.showErrorMessage('there was a websocket network error - url: ' + config.url);
+
+    console.log(cookies);
+    //try and do some sort of cleanup on the websocket if it has failed
+    var ws1 = cookies['websocket'];
+    if (ws1) {
+      console.log("connection status is " + ws1.readyState);
+      ws1.close(NORMAL_CLOSE, 'Upload Complete');
+    }
+  });
 }

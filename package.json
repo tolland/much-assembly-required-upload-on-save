@@ -1,8 +1,8 @@
 {
     "name": "much-assembly-required-upload-on-save",
-    "displayName": "Much Assembly Required (Upload on Save)",
-    "description": "Handle uploading to the server on save mar file",
-    "version": "0.0.3",
+    "displayName": "Much Assembly Required (Auto-Upload)",
+    "description": "Handle uploading to the server of active mar file",
+    "version": "0.0.5",
     "publisher": "tomhodder",
     "repository": {
         "url": "https://github.com/tolland/much-assembly-required-upload-on-save",
@@ -16,30 +16,35 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:marserver.sayHello",
-        "onCommand:marserver.sayHello1",
-        "onCommand:marserver.sayHello2",
-        "onCommand:marserver.sayHello3",
-        "onCommand:marserver.sayHello4"
+        "onCommand:marserver.uploadToServer",
+        "onCommand:marserver.uploadToServer1",
+        "onCommand:marserver.uploadToServer2",
+        "onCommand:marserver.uploadToServer3",
+        "workspaceContains:**/*.mar"
     ],
     "main": "./extension",
     "contributes": {
         "commands": [{
-            "command": "marserver.sayHello",
-            "title": "MAR Upload file"
-        }, {
-            "command": "marserver.sayHello1",
-            "title": "MAR Upload file 1"
-        }, {
-            "command": "marserver.sayHello2",
-            "title": "MAR Upload file 2"
-        }, {
-            "command": "marserver.sayHello3",
-            "title": "MAR Upload file 3"
-        }, {
-            "command": "marserver.sayHello4",
-            "title": "MAR Upload file 4"
-        }],
+                "command": "marserver.uploadToServer",
+                "title": "MAR Upload file"
+            },
+            {
+                "command": "marserver.uploadToServer1",
+                "title": "MAR Upload file 1"
+            },
+            {
+                "command": "marserver.uploadToServer2",
+                "title": "MAR Upload file 2"
+            },
+            {
+                "command": "marserver.uploadToServer3",
+                "title": "MAR Upload file 3"
+            },
+            {
+                "command": "marserver.uploadToServer4",
+                "title": "MAR Upload file 4"
+            }
+        ],
         "configuration": {
             "type": "object",
             "title": "Mar Server configuration",
@@ -83,36 +88,50 @@
                             }
                         }
                     }
+                },
+                "marserver.onsave": {
+                    "type": "boolean",
+                    "description": "Automatically trigger upload on save",
+                    "default": false
+                },
+                "marserver.commands": {
+                    "type": "object",
+                    "description": "Commands to associate with file globs, e.g. \"marserver.uploadToServer1\": [\"**/*.mar\"]",
+                    "default": {}
                 }
             }
         },
-
         "keybindings": [{
-            "command": "marserver.sayHello",
-            "key": "ctrl+alt+u",
-            "mac": "cmd+alt+u",
-            "when": "editorTextFocus"
-        }, {
-            "command": "marserver.sayHello1",
-            "key": "ctrl+shift+alt+1",
-            "mac": "cmd+shift+alt+1",
-            "when": "editorTextFocus"
-        }, {
-            "command": "marserver.sayHello2",
-            "key": "ctrl+shift+alt+2",
-            "mac": "cmd+shift+alt+2",
-            "when": "editorTextFocus"
-        }, {
-            "command": "marserver.sayHello3",
-            "key": "ctrl+shift+alt+3",
-            "mac": "cmd+shift+alt+3",
-            "when": "editorTextFocus"
-        }, {
-            "command": "marserver.sayHello4",
-            "key": "ctrl+shift+alt+4",
-            "mac": "cmd+shift+alt+4",
-            "when": "editorTextFocus"
-        }]
+                "command": "marserver.uploadToServer",
+                "key": "ctrl+alt+u",
+                "mac": "cmd+alt+u",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "marserver.uploadToServer1",
+                "key": "ctrl+shift+alt+1",
+                "mac": "cmd+shift+alt+1",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "marserver.uploadToServer2",
+                "key": "ctrl+shift+alt+2",
+                "mac": "cmd+shift+alt+2",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "marserver.uploadToServer3",
+                "key": "ctrl+shift+alt+3",
+                "mac": "cmd+shift+alt+3",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "marserver.uploadToServer4",
+                "key": "ctrl+shift+alt+4",
+                "mac": "cmd+shift+alt+4",
+                "when": "editorTextFocus"
+            }
+        ]
     },
     "scripts": {
         "postinstall": "node ./node_modules/vscode/bin/install",
@@ -126,6 +145,7 @@
         "@types/mocha": "^2.2.42"
     },
     "dependencies": {
+        "minimatch": "^3.0.4",
         "ws": "^3.3.3"
     }
 }
