@@ -6,13 +6,11 @@ https://muchassemblyrequired.com/
 
 It basically allows you to avoid using the web interface to upload;
 
-![Much Assembly Required](https://i.imgur.com/Cu8wXhc.png?1)
+![Much Assembly Required](https://i.imgur.com/wlGOKxW.png?1)
 
-Instead press `Ctrl-Alt-U`
-
+Instead save the document then press `Ctrl-Alt-U`
 
 ![Much Assembly Required](https://i.imgur.com/bx4wTnf.png)
-
 
 or 
 
@@ -25,17 +23,19 @@ to upload to multiple servers.
 
 ## Features
 
-The extension creates a command with a default keybings of Ctrl-Alt-U, which 
+The extension creates a command with a default keybindings of Ctrl-Alt-U, which 
 uploads the contents of the current editor to the account configured in 
 settings.json
 
-Alternatively can be used against mutiple arbitrary back-ends, for production,
+Alternatively it can be used against multiple arbitrary back-ends, for production,
 development, local etc..
+
+Once uploaded the changes will be in immediate effect, but, to view them in the online editor the reload button needs to be clicked
 
 ## Requirements
 
 This extension obviously requires that the user has an account on 
-muchassemblyrequired.com/ or a privately hosted server
+muchassemblyrequired.com/ or a privately hosted server.
 
 ## Extension Settings
 
@@ -51,6 +51,14 @@ Only requires username/password for muchassemblyrequired.com in `settings.json`
 ```
 Pressing Ctrl-Alt-U will upload the current file in the editor to muchassemblyrequired.com
 
+### For use with local development
+You can additionally include the local server url to hit:
+```json
+{
+    "marserver.url": "http://localhost:4567"
+}
+```
+
 #### Configure Upload-on-save
 
 add the following to your `settings.json` to automatically upload-on-save any file matching the glob.
@@ -64,7 +72,6 @@ add the following to your `settings.json` to automatically upload-on-save any fi
     }
 
 ```
-
 
 ### Advanced config. When using multiple target servers
 
@@ -93,7 +100,7 @@ If you have a private server, or similar you can add blocks of servers
     ],
 ```
 
-You can then use the following keybings to upload the active file
+You can then use the following keybindings to upload the active file
 
 * `Ctrl-Shift-Alt-1` - uploads the first server
 * `Ctrl-Shift-Alt-2` - the next one
@@ -106,7 +113,7 @@ You can then use the following keybings to upload the active file
 
 If you have configured an array of marservers, you can up the active file to all of them, on saving the active document.
 
-You can have up to 4 (corresponding to keybings Ctrl-Shift-Alt-[1-4])
+You can have up to 4 (corresponding to keybindings Ctrl-Shift-Alt-[1-4])
 
  ```json
 ,
@@ -130,10 +137,12 @@ You can have up to 4 (corresponding to keybings Ctrl-Shift-Alt-[1-4])
 ## Known Issues
 
 This is a quickly written work-around. It's unlikely to be without bugs
-make sure you have a backup of your files before uploading
+make sure you have a backup of your files before uploading.
+
+Please raise any issues at https://github.com/tolland/much-assembly-required-upload-on-save/issues
 
 ### For more information
 
-* Slack
-* Wiki
+* [Slack](https://muchassemblyrequired.slack.com)
+* [Wiki](https://github.com/simon987/Much-Assembly-Required/wiki)
 
