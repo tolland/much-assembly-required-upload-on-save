@@ -1,23 +1,18 @@
-//
-//
-//
-//
 /**
  * Authentication to be able to send the assembly source code to
  * the websocket seems to be in 4 (3 needed?) stages
- * 1) authenticate with user/pass to url auth.re.php
- * 2) Use the cookie from 1) to request a token from getServerInfo.php
+ * 1) authenticate with user/pass to url /login
+ * 2) Use the cookie from 1) to request a token from /server_info
  * 3) Open connection to websocket using cookie from 1)
  * 4) send the token obtained from 2) to the socket as a message
- * 
+ *
  * 5) Then parse the reply on the websocket relating to the code
- * to check it was recieved.
- * 
+ * to check it was received.
+ *
  * NOTE: these requests can't be interleaved, otherwise it invalidates
  * the token stored in the mysql database which is sent to the websocket
- * 
+ *
  */
-
 
 var events = require('events');
 //var cookie = require('cookie');
@@ -51,8 +46,8 @@ var uploadfile = function (config, filepath, vscode) {
   var cookies = {};
 
   // generate urls for the auth and info pages
-  const urlstring = url.resolve(config.url + '/', "auth.re.php");
-  const token_urlstring = url.resolve(config.url + '/', "getServerInfo.php");
+  const urlstring = url.resolve(config.url + '/', "login");
+  const token_urlstring = url.resolve(config.url + '/', "server_info");
 
   //auth.re.php takes credentials as body of POST
   var post_data = querystring.stringify({
@@ -98,9 +93,7 @@ var uploadfile = function (config, filepath, vscode) {
 
           //don't process if we recieved a 500 error
           return;
-
       }
-
 
       var data = "";
       response.on(
@@ -120,8 +113,8 @@ var uploadfile = function (config, filepath, vscode) {
             setcookie.forEach(
               function (cookiestr) {
 
-                if (cookiestr.startsWith('marSession')) {
-                  cookies['marSession'] = cookiestr.split(';')[0].split('=')[1];
+                if (cookiestr.startsWith('JSESSIONID')) {
+                  cookies['marSession'] = cookiestr;
                   eventEmitter.emit('got-cookie');
 
                 } else if (cookiestr.startsWith('login=Username+or+password+incorrect')) {
@@ -136,16 +129,11 @@ var uploadfile = function (config, filepath, vscode) {
                 }
               }
             );
-
-            // if (!cookies['marSession']) {
-            //   eventEmitter.emit('error', "DIDN'T match marcookie");
-            // }
-
           } else {
             console.log("COOKIE:ERROR:NO-COOKIE");
             eventEmitter.emit('error', 'no-cookie returned');
           }
-        }
+         }
       );
     });
 
@@ -159,11 +147,11 @@ var uploadfile = function (config, filepath, vscode) {
   // post the data
   post_req.write(post_data);
 
-  // this actally sends the request
+  // this actually sends the request
   post_req.end();
 
   /**
-   * once we have authenticated against the server 
+   * once we have authenticated against the server
    * and have cookie available
    */
   eventEmitter.on('got-cookie', () => {
@@ -176,7 +164,7 @@ var uploadfile = function (config, filepath, vscode) {
       method: 'GET',
       path: parsedurl.path,
       headers: {
-        'Cookie': 'marSession=' + cookies['marSession'] + '; path=/'
+        'Cookie': cookies['marSession']
       }
     };
 
@@ -207,12 +195,12 @@ var uploadfile = function (config, filepath, vscode) {
         /**
          response looks like
          {
-    "address": "wss://muchassemblyrequired.com:443/socket",
-    "serverName": "Official MAR server",
-    "tickLength": 1000,
-    "token": "1a54d0e570b...snip...d80841c6ff1b3c3714825",
-    "username": "XXX"
-          } 
+          "address": "wss://muchassemblyrequired.com:443/socket",
+          "serverName": "Official MAR server",
+          "tickLength": 1000,
+          "token": "1a54d0e570b...snip...d80841c6ff1b3c3714825",
+          "username": "XXX"
+          }
 
         need token and address fields...
          */
@@ -247,7 +235,7 @@ var uploadfile = function (config, filepath, vscode) {
       }
     );
 
-    // this actally sends the request
+    // this actually sends the request
     token_req.end();
   });
 
@@ -264,7 +252,7 @@ var uploadfile = function (config, filepath, vscode) {
     const ws = new WebSocket(cookies['ServerInfo'].address, {
       perMessageDeflate: false,
       'headers': {
-        'Cookie': 'marSession=' + cookies['marSession']
+        'Cookie': cookies['marSession']
       },
       handshakeTimeout: 5000
     }, {
@@ -296,7 +284,6 @@ var uploadfile = function (config, filepath, vscode) {
       if (message) {
         message_stack.push(message);
         if (message.t) {
-
           switch (message.t) {
             // responds with {t: "auth", m: "ok"}
             case 'auth':
@@ -306,7 +293,6 @@ var uploadfile = function (config, filepath, vscode) {
                   if (err) {
                     eventEmitter.emit('error',
                       "code read error (couldn't send file)", err);
-
                   } else {
                     cookies['websocket'].send(JSON.stringify({
                       t: 'uploadCode',
@@ -368,7 +354,6 @@ var uploadfile = function (config, filepath, vscode) {
     });
   });
 
-
   eventEmitter.on('debug1', (msg, obj) => {
 
     console.log("DEBUGGING: " + msg);
@@ -377,7 +362,6 @@ var uploadfile = function (config, filepath, vscode) {
       console.log(obj);
     }
   });
-
 
   eventEmitter.on('error', (error, object) => {
     console.error("error: " + error);
@@ -399,8 +383,5 @@ var uploadfile = function (config, filepath, vscode) {
       // its fine to call close on a closed connection
       ws1.close();
     }
-
   });
-
-
 }

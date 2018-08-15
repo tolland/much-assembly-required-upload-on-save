@@ -51,7 +51,7 @@
             "properties": {
                 "marserver.url": {
                     "type": "string",
-                    "default": "https://muchassemblyrequired.com/",
+                    "default": "https://muchassemblyrequired.com",
                     "description": "hostname to connect"
                 },
                 "marserver.username": {
