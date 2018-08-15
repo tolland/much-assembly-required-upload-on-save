@@ -2,7 +2,7 @@
     "name": "much-assembly-required-upload-on-save",
     "displayName": "Much Assembly Required (Auto-Upload)",
     "description": "Handle uploading to the server of active mar file",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "publisher": "tomhodder",
     "repository": {
         "url": "https://github.com/tolland/much-assembly-required-upload-on-save",
@@ -24,7 +24,8 @@
     ],
     "main": "./extension",
     "contributes": {
-        "commands": [{
+        "commands": [
+            {
                 "command": "marserver.uploadToServer",
                 "title": "MAR Upload file"
             },
@@ -101,7 +102,8 @@
                 }
             }
         },
-        "keybindings": [{
+        "keybindings": [
+            {
                 "command": "marserver.uploadToServer",
                 "key": "ctrl+alt+u",
                 "mac": "cmd+alt+u",
@@ -138,11 +140,11 @@
         "test": "node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6",
-        "eslint": "^4.6.1",
-        "@types/node": "^7.0.43",
-        "@types/mocha": "^2.2.42"
+        "@types/mocha": "^2.2.48",
+        "@types/node": "^7.0.69",
+        "eslint": "^4.19.1",
+        "typescript": "^2.9.2",
+        "vscode": "^1.1.21"
     },
     "dependencies": {
         "minimatch": "^3.0.4",
